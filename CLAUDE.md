@@ -201,7 +201,7 @@ client/
 | 7 | 55–63 | Testing, polishing, deployment, documentation |
 
 **Current status:** _(update this line as you progress)_
-`▶ On Day: __ | Phase: __ | Last completed task: __`
+`▶ On Day: not tracked strictly | Phase: 4 core pieces complete | Last completed task: express-validator wired into signup/login/project/task routes (server/middleware/validate.middleware.js + rules in auth.routes.js, project.routes.js, task.routes.js), and error.middleware.js now maps Mongoose ValidationError/CastError to clean 400s instead of 500. All verified end-to-end. Backend is now feature-complete per CLAUDE.md's endpoint table with validation. Remaining before frontend: decide whether to push the repo to GitHub (auth issue from earlier was never resolved — work is still only committed locally).`
 
 > Full day-by-day breakdown (all 63 days) lives in the companion Word doc
 > `TaskFlow-Project-Plan.docx`. If Claude needs the exact task for a specific day and it isn't
