@@ -8,7 +8,7 @@ const handleValidation = require('../middleware/validate.middleware');
 const taskUpdateRules = [
     body('title').optional().trim().notEmpty().withMessage('Title cannot be empty'),
     body('status').optional().isIn(['todo', 'in-progress', 'done']).withMessage('Status must be todo, in-progress, or done'),
-    body('dueDate').optional().isISO8601().withMessage('dueDate must be a valid date'),
+    body('dueDate').optional({ values: 'null' }).isISO8601().withMessage('dueDate must be a valid date'),
 ];
 
 router.put('/:id', protect, taskUpdateRules, handleValidation, updateTask);

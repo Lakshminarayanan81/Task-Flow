@@ -1,4 +1,5 @@
 const Project = require('../models/Project');
+const Task = require('../models/Task');
 
 async function createProject(req, res, next) {
     try {
@@ -65,6 +66,7 @@ async function deleteProject(req, res, next) {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
+    await Task.deleteMany({ project: project._id });
     await project.deleteOne();
 
     res.status(200).json({ success: true, data: {} });

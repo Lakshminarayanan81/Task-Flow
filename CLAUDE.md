@@ -201,7 +201,7 @@ client/
 | 7 | 55–63 | Testing, polishing, deployment, documentation |
 
 **Current status:** _(update this line as you progress)_
-`▶ On Day: not tracked strictly | Phase: 5 in progress | Last completed task: Backend feature-complete (auth, Project/Task CRUD, filtering, validation) and pushed to GitHub (Lakshminarayanan81/Task-Flow, branch main). Frontend started: Vite + React scaffold, Tailwind v4, client/src/api/axios.js, client/src/context/AuthContext.jsx, BrowserRouter/AuthProvider/Toaster in main.jsx, placeholder Login/Signup pages. Next: real Login page (react-hook-form + useAuth + toast).`
+`▶ On Day: not tracked strictly | Phase: 6 complete → starting Phase 7 | Last completed task: All v1 features in §3 work end to end — Dashboard (list/create projects), ProjectDetails board (3 status columns; task create/edit/delete/status change; project edit/delete; server-side filter/search with debounce + abort). Backend fixes: deleting a project also deletes its tasks; PUT /api/tasks/:id accepts dueDate: null to clear it. Next (Phase 7): 401 response interceptor + logged-in redirect from /login, move useAuth to its own file, Jest + Supertest backend tests, deployment (env-based CORS origin, SPA rewrite), README.`
 
 > Full day-by-day breakdown (all 63 days) lives in the companion Word doc
 > `TaskFlow-Project-Plan.docx`. If Claude needs the exact task for a specific day and it isn't
