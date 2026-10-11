@@ -15,7 +15,6 @@ function TaskForm({ onSubmit, initialValues, onCancel }) {
       dueDate: initialValues?.dueDate ? initialValues.dueDate.slice(0, 10) : '',
     },
   });
-  
 
   async function submit(data) {
     const payload = { title: data.title };
