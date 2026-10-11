@@ -5,6 +5,8 @@ import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import TaskCard from '../components/TaskCard';
 import TaskForm from '../components/TaskForm';
+import { PencilIcon, SearchIcon, TrashIcon, XIcon } from '../components/Icons';
+import { STATUS_STYLES } from '../statusStyles';
 
 const STATUSES = [
   { value: 'todo', label: 'To Do' },
@@ -144,81 +146,115 @@ function ProjectDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <Navbar />
-        <p className="p-6 text-gray-500">Loading…</p>
+        <main className="mx-auto flex max-w-[1376px] flex-col gap-5 px-4 py-7 sm:px-8">
+          <div className="h-4 w-40 animate-pulse rounded bg-line" />
+          <div className="h-7 w-72 animate-pulse rounded bg-line" />
+          <div className="grid gap-4 md:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-64 animate-pulse rounded-xl bg-chip" />
+            ))}
+          </div>
+        </main>
       </div>
     );
   }
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <Navbar />
-        <div className="p-6">
-          <p className="text-gray-700">Project not found.</p>
-          <Link to="/dashboard" className="text-blue-600 text-sm">← Back to projects</Link>
-        </div>
+        <main className="mx-auto flex max-w-md flex-col items-center gap-3 px-4 py-24 text-center">
+          <h1 className="text-xl font-semibold tracking-[-0.01em]">Project not found</h1>
+          <p className="text-sm text-ink-subtle">
+            It may have been deleted, or it belongs to another account.
+          </p>
+          <Link to="/dashboard" className="btn btn-secondary mt-2">
+            ← Back to projects
+          </Link>
+        </main>
       </div>
     );
   }
 
+  const hasFilters = Object.values(filters).some(Boolean);
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Navbar />
-      <main className="max-w-6xl mx-auto p-6 space-y-6">
-        <div>
-          <Link to="/dashboard" className="text-sm text-blue-600">← All projects</Link>
-          {editing ? (
-            <form onSubmit={handleUpdateProject} className="mt-2 space-y-2">
-              <input
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full border rounded px-3 py-2"
-              />
-              <input
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                placeholder="Description (optional)"
-                className="w-full border rounded px-3 py-2"
-              />
-              <div className="flex gap-2">
-                <button type="submit" className="bg-blue-600 text-white rounded px-3 py-1 text-sm">Save</button>
-                <button type="button" onClick={() => setEditing(false)} className="text-sm">Cancel</button>
-              </div>
-            </form>
-          ) : (
-            <div className="flex items-start justify-between gap-4 mt-2">
-              <div>
-                <h1 className="text-2xl font-semibold">{project.title}</h1>
-                {project.description && <p className="text-gray-600 mt-1">{project.description}</p>}
-              </div>
-              <div className="flex gap-3 text-sm">
-                <button onClick={startEditing} className="text-blue-600">Edit</button>
-                <button onClick={handleDeleteProject} className="text-red-600">Delete</button>
-              </div>
+      <main className="mx-auto flex max-w-[1376px] flex-col gap-5 px-4 py-7 sm:px-8">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[13px]">
+          <Link to="/dashboard" className="font-medium text-ink-subtle transition hover:text-ink">
+            Projects
+          </Link>
+          <span className="text-line-strong">/</span>
+          <span className="truncate font-medium">{project.title}</span>
+        </nav>
+
+        {editing ? (
+          <form onSubmit={handleUpdateProject} className="card flex max-w-2xl flex-col gap-3 p-4">
+            <input
+              aria-label="Project title"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="input text-[15px] font-semibold"
+            />
+            <input
+              aria-label="Project description"
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              placeholder="Description (optional)"
+              className="input"
+            />
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setEditing(false)} className="btn btn-secondary">
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">Save changes</button>
             </div>
-          )}
-        </div>
+          </form>
+        ) : (
+          <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <h1 className="text-2xl font-semibold tracking-[-0.02em]">{project.title}</h1>
+              {project.description && (
+                <p className="max-w-[640px] text-sm text-ink-subtle">{project.description}</p>
+              )}
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <button onClick={startEditing} className="btn btn-secondary">
+                <PencilIcon />
+                Edit
+              </button>
+              <button onClick={handleDeleteProject} className="btn btn-danger">
+                <TrashIcon />
+                Delete
+              </button>
+            </div>
+          </header>
+        )}
 
         <TaskForm onSubmit={handleCreateTask} />
 
-        <div className="bg-white p-4 rounded-lg shadow grid gap-3 sm:grid-cols-5 sm:items-end">
-          <label className="text-sm sm:col-span-2">
-            Search
+        <div className="flex flex-wrap items-center gap-2.5">
+          <label className="relative w-full sm:w-[300px]">
+            <span className="sr-only">Search tasks</span>
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-ink-subtle" />
             <input
               value={filters.search}
               onChange={(e) => updateFilter('search', e.target.value)}
-              placeholder="Title or description"
-              className="mt-1 w-full border rounded px-3 py-2"
+              placeholder="Search title or description"
+              className="input h-9 pl-8 text-[13px]"
             />
           </label>
-          <label className="text-sm">
-            Status
+
+          <label className="flex items-center gap-2">
+            <span className="text-[13px] text-ink-subtle">Status</span>
             <select
               value={filters.status}
               onChange={(e) => updateFilter('status', e.target.value)}
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="input h-9 w-auto text-[13px] font-medium"
             >
               <option value="">All</option>
               {STATUSES.map((s) => (
@@ -226,40 +262,51 @@ function ProjectDetails() {
               ))}
             </select>
           </label>
-          <label className="text-sm">
-            Due after
+
+          <label className="flex items-center gap-2">
+            <span className="text-[13px] text-ink-subtle">Due after</span>
             <input
               type="date"
               value={filters.dueAfter}
               onChange={(e) => updateFilter('dueAfter', e.target.value)}
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="input h-9 w-auto font-mono text-[13px] text-ink-muted"
             />
           </label>
-          <label className="text-sm">
-            Due before
+
+          <label className="flex items-center gap-2">
+            <span className="text-[13px] text-ink-subtle">Due before</span>
             <input
               type="date"
               value={filters.dueBefore}
               onChange={(e) => updateFilter('dueBefore', e.target.value)}
-              className="mt-1 w-full border rounded px-3 py-2"
+              className="input h-9 w-auto font-mono text-[13px] text-ink-muted"
             />
           </label>
-        </div>
-        {Object.values(filters).some(Boolean) && (
-          <button onClick={() => setFilters(EMPTY_FILTERS)} className="text-sm text-blue-600">
-            Clear filters
-          </button>
-        )}
 
-        <div className="grid gap-4 md:grid-cols-3">
+          {hasFilters && (
+            <button
+              onClick={() => setFilters(EMPTY_FILTERS)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand-soft px-2.5 text-[13px] font-medium text-brand transition hover:bg-brand hover:text-white"
+            >
+              Clear filters
+              <XIcon className="size-2.5" />
+            </button>
+          )}
+        </div>
+
+        <div className="grid items-start gap-4 md:grid-cols-3">
           {STATUSES.filter((col) => !filters.status || col.value === filters.status).map((col) => {
             const columnTasks = tasks.filter((t) => t.status === col.value);
             return (
-              <section key={col.value} className="bg-gray-100 rounded-lg p-3">
-                <h2 className="font-semibold mb-3">
-                  {col.label} <span className="text-sm text-gray-500">({columnTasks.length})</span>
+              <section key={col.value} className="flex flex-col gap-3 rounded-xl bg-chip/70 p-3">
+                <h2 className="flex items-center gap-2 px-1 text-[13px] font-semibold">
+                  <span className={`size-2 rounded-full ${STATUS_STYLES[col.value].dot}`} />
+                  {col.label}
+                  <span className="ml-auto rounded-full bg-white px-2 py-0.5 font-mono text-[11px] font-normal text-ink-subtle">
+                    {columnTasks.length}
+                  </span>
                 </h2>
-                <div className="space-y-3">
+                <div className="flex flex-col gap-2.5">
                   {columnTasks.map((task) => (
                     <TaskCard
                       key={task._id}
@@ -270,7 +317,11 @@ function ProjectDetails() {
                       onUpdate={handleUpdateTask}
                     />
                   ))}
-                  {columnTasks.length === 0 && <p className="text-sm text-gray-500">No tasks</p>}
+                  {columnTasks.length === 0 && (
+                    <p className="rounded-lg border border-dashed border-line-strong px-3 py-6 text-center text-[13px] text-ink-faint">
+                      No tasks
+                    </p>
+                  )}
                 </div>
               </section>
             );

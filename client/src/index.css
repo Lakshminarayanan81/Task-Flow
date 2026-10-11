@@ -1,1 +1,81 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-brand: #4b57d8;
+  --color-brand-hover: #3c47c0;
+  --color-brand-soft: #eef0fd;
+
+  --color-ink: #15181d;
+  --color-ink-muted: #4a515e;
+  --color-ink-subtle: #838b99;
+  --color-ink-faint: #a3aab6;
+
+  --color-canvas: #f6f7f9;
+  --color-chip: #f1f2f5;
+  --color-line: #e5e7ec;
+  --color-line-strong: #d5d8df;
+
+  --color-todo: #6b7280;
+  --color-todo-bg: #f1f2f5;
+  --color-doing: #b7791f;
+  --color-doing-bg: #fdf3e3;
+  --color-done: #157f55;
+  --color-done-bg: #e5f4ec;
+  --color-danger: #c8453b;
+  --color-danger-bg: #fcecea;
+
+  --shadow-card: 0 1px 2px rgba(21, 24, 29, 0.05);
+  --shadow-hover: 0 4px 12px rgba(21, 24, 29, 0.08);
+  --shadow-overlay: 0 16px 40px rgba(21, 24, 29, 0.14);
+}
+
+@layer base {
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+  }
+}
+
+@layer components {
+  .field-label {
+    @apply text-[13px] font-medium text-ink-muted;
+  }
+
+  .input {
+    @apply h-10 w-full rounded-lg border border-line-strong bg-white px-3 text-sm text-ink outline-none transition placeholder:text-ink-faint focus:border-brand focus:ring-3 focus:ring-brand/15;
+  }
+
+  .input-error {
+    @apply border-danger focus:border-danger focus:ring-danger/15;
+  }
+
+  .field-error {
+    @apply text-xs text-danger;
+  }
+
+  .btn {
+    @apply inline-flex h-9 items-center justify-center gap-1.5 rounded-lg px-3.5 text-[13px] font-semibold whitespace-nowrap transition focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-brand/25 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-brand text-white shadow-card hover:bg-brand-hover;
+  }
+
+  .btn-secondary {
+    @apply border border-line-strong bg-white font-medium text-ink-muted hover:bg-canvas hover:text-ink;
+  }
+
+  .btn-ghost {
+    @apply font-medium text-ink-subtle hover:bg-chip hover:text-ink;
+  }
+
+  .btn-danger {
+    @apply font-medium text-danger hover:bg-danger-bg;
+  }
+
+  .card {
+    @apply rounded-xl border border-line bg-white shadow-card;
+  }
+}

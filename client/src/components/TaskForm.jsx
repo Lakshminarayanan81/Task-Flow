@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form';
+import { PlusIcon } from './Icons';
 
 function TaskForm({ onSubmit, initialValues, onCancel }) {
   const isEdit = Boolean(initialValues);
@@ -34,37 +35,49 @@ function TaskForm({ onSubmit, initialValues, onCancel }) {
       onSubmit={handleSubmit(submit)}
       className={
         isEdit
-          ? 'space-y-2'
-          : 'bg-white p-4 rounded-lg shadow grid gap-3 sm:grid-cols-4 sm:items-start'
+          ? 'flex flex-col gap-2.5'
+          : 'card grid gap-3 p-4 sm:grid-cols-[1.2fr_1.6fr_auto_auto] sm:items-start'
       }
     >
-      <div>
+      <div className="flex flex-col gap-1.5">
+        <label className="sr-only" htmlFor={isEdit ? `title-${initialValues._id}` : 'new-task-title'}>
+          Task title
+        </label>
         <input
-          placeholder="Task title"
-          className="w-full border rounded px-3 py-2"
+          id={isEdit ? `title-${initialValues._id}` : 'new-task-title'}
+          placeholder={isEdit ? 'Task title' : 'New task title'}
+          aria-invalid={errors.title ? 'true' : 'false'}
+          className={`input ${isEdit ? 'h-9' : ''} ${errors.title ? 'input-error' : ''}`}
           {...register('title', { required: 'Title is required' })}
         />
-        {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>}
+        {errors.title && <p className="field-error">{errors.title.message}</p>}
       </div>
       <input
+        aria-label="Description"
         placeholder="Description (optional)"
-        className="w-full border rounded px-3 py-2"
+        className={`input ${isEdit ? 'h-9' : ''}`}
         {...register('description')}
       />
-      <input type="date" className="w-full border rounded px-3 py-2" {...register('dueDate')} />
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-50"
-        >
-          {isEdit ? 'Save' : 'Add task'}
-        </button>
+      <input
+        type="date"
+        aria-label="Due date"
+        className={`input ${isEdit ? 'h-9' : 'sm:w-auto'} font-mono text-[13px] text-ink-muted`}
+        {...register('dueDate')}
+      />
+      <div className={`flex gap-2 ${isEdit ? 'justify-end' : ''}`}>
         {isEdit && (
-          <button type="button" onClick={onCancel} className="text-sm">
+          <button type="button" onClick={onCancel} className="btn btn-secondary h-8">
             Cancel
           </button>
         )}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className={`btn btn-primary ${isEdit ? 'h-8' : 'h-10'}`}
+        >
+          {!isEdit && <PlusIcon />}
+          {isEdit ? 'Save' : 'Add task'}
+        </button>
       </div>
     </form>
   );
