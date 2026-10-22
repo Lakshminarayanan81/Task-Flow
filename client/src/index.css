@@ -26,6 +26,11 @@
   --color-done-bg: #e5f4ec;
   --color-danger: #c8453b;
   --color-danger-bg: #fcecea;
+  /* CHANGE [design]: two new tokens from the design's error box (border + darker text),
+     used by the inline "Email or password is incorrect." message on Login and Signup.
+     Tailwind v4 turns every --color-* here into classes: border-danger-line, text-danger-ink. */
+  --color-danger-line: #f3cfca;
+  --color-danger-ink: #a6352c;
 
   --shadow-card: 0 1px 2px rgba(21, 24, 29, 0.05);
   --shadow-hover: 0 4px 12px rgba(21, 24, 29, 0.08);

@@ -1,25 +1,42 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import Logo from '../components/Logo';
+import PasswordInput from '../components/PasswordInput';
+import { AlertIcon } from '../components/Icons';
 
+// ─── CHANGE [design] ──────────────────────────────────────────────────────────
+// WAS:    Errors appeared as a toast popup; plain password field; no "remember me".
+// NOW:    • Errors show INSIDE the page under the card (the design's red box), held in
+//           `formError` state — a toast disappears after a few seconds, the box stays put.
+//         • A 401 becomes the friendlier "Email or password is incorrect." Same message for
+//           both "no such email" and "wrong password", matching the backend's deliberate
+//           choice so nobody can probe which emails are registered.
+//         • "Keep me logged in" (react-hook-form checkbox, ticked by default): its value is
+//           passed to login(), which picks localStorage vs sessionStorage (see authStorage.js).
+//         • PasswordInput adds the show/hide eye.
+//         • Removed the "Logged in" success toast — landing on the dashboard says it already.
+// SKIPPED: the design's "Forgot?" link — password reset is v2 per CLAUDE.md §3.
+// ─────────────────────────────────────────────────────────────────────────────
 function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [formError, setFormError] = useState('');
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm();
+  } = useForm({ defaultValues: { remember: true } });
 
   async function onSubmit(data) {
+    setFormError('');
     try {
-      await login(data.email, data.password);
-      toast.success('Logged in');
+      await login(data.email, data.password, data.remember);
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
+      if (err.response?.status === 401) setFormError('Email or password is incorrect.');
+      else setFormError(err.response?.data?.message || 'Could not reach the server. Try again in a moment.');
     }
   }
 
@@ -57,9 +74,8 @@ function Login() {
 
             <div className="flex flex-col gap-[7px]">
               <label className="field-label" htmlFor="password">Password</label>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
                 autoComplete="current-password"
                 aria-invalid={errors.password ? 'true' : 'false'}
                 className={`input ${errors.password ? 'input-error' : ''}`}
@@ -69,8 +85,13 @@ function Login() {
             </div>
           </div>
 
+          <label className="flex w-fit cursor-pointer items-center gap-2.5 text-[13px] text-ink-muted">
+            <input type="checkbox" className="size-4 cursor-pointer accent-brand" {...register('remember')} />
+            Keep me logged in
+          </label>
+
           <button type="submit" disabled={isSubmitting} className="btn btn-primary h-10 text-sm">
-            {isSubmitting ? 'Logging in…' : 'Log in'}
+            {isSubmitting ? 'Logging in…' : 'Log In'}
           </button>
 
           <p className="text-center text-[13px] text-ink-subtle">
@@ -80,6 +101,16 @@ function Login() {
             </Link>
           </p>
         </form>
+
+        {formError && (
+          <div
+            role="alert"
+            className="flex items-center gap-2.5 rounded-lg border border-danger-line bg-danger-bg px-3 py-2.5"
+          >
+            <AlertIcon className="size-[15px] shrink-0 text-danger" />
+            <p className="text-[13px] text-danger-ink">{formError}</p>
+          </div>
+        )}
       </div>
     </div>
   );

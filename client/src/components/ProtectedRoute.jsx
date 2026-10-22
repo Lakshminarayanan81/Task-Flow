@@ -1,5 +1,7 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+// CHANGE [design]: import path only — WAS '../context/AuthContext'. useAuth moved to its own
+// file (see context/useAuth.js for why). The logic below is unchanged.
+import { useAuth } from '../context/useAuth';
 
 function ProtectedRoute({ children }) {
   const { token } = useAuth();

@@ -65,6 +65,47 @@ export function TrashIcon({ className = 'size-3.5' }) {
   );
 }
 
+// CHANGE [design]: four new icons for the features below — Eye/EyeOff (show/hide password),
+// Dots (the ⋮ menus) and Alert (the inline login/signup error). SVG paths are taken from
+// the design file, same as the icons above.
+export function EyeIcon({ className = 'size-4' }) {
+  return (
+    <svg {...base} strokeWidth="1.4" className={className}>
+      <path d="M1.5 8s2.4-4 6.5-4 6.5 4 6.5 4-2.4 4-6.5 4S1.5 8 1.5 8Z" />
+      <circle cx="8" cy="8" r="1.9" />
+    </svg>
+  );
+}
+
+export function EyeOffIcon({ className = 'size-4' }) {
+  return (
+    <svg {...base} strokeWidth="1.4" className={className}>
+      <path d="M1.5 8s2.4-4 6.5-4 6.5 4 6.5 4-2.4 4-6.5 4S1.5 8 1.5 8Z" />
+      <circle cx="8" cy="8" r="1.9" />
+      <path d="m2.5 2.5 11 11" />
+    </svg>
+  );
+}
+
+export function DotsIcon({ className = 'size-4' }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className={className}>
+      <circle cx="8" cy="3.4" r="1.3" />
+      <circle cx="8" cy="8" r="1.3" />
+      <circle cx="8" cy="12.6" r="1.3" />
+    </svg>
+  );
+}
+
+export function AlertIcon({ className = 'size-[15px]' }) {
+  return (
+    <svg {...base} strokeWidth="1.5" className={className}>
+      <circle cx="8" cy="8" r="6.3" />
+      <path d="M8 5v3.6M8 10.8h.01" />
+    </svg>
+  );
+}
+
 export function XIcon({ className = 'size-3' }) {
   return (
     <svg {...base} strokeWidth="1.6" className={className}>

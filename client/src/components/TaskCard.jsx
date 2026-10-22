@@ -2,6 +2,7 @@ import { useState } from 'react';
 import TaskForm from './TaskForm';
 import { CalendarIcon, ChevronDownIcon } from './Icons';
 import { STATUS_STYLES } from '../statusStyles';
+import { dueDay, formatDay, isOverdue } from '../utils/date';
 
 function TaskCard({ task, statuses, onStatusChange, onDelete, onUpdate }) {
   const [editing, setEditing] = useState(false);
@@ -23,6 +24,9 @@ function TaskCard({ task, statuses, onStatusChange, onDelete, onUpdate }) {
   }
 
   const style = STATUS_STYLES[task.status] ?? STATUS_STYLES.todo;
+  // CHANGE [design]: NEW — a task past its due date and not done is "overdue" (see utils/date.js).
+  // Its date renders in the danger red with an "Overdue ·" prefix so it stands out on the board.
+  const overdue = isOverdue(task);
 
   return (
     <article className="group flex flex-col gap-2.5 rounded-[10px] border border-line bg-white p-3.5 shadow-card transition hover:border-line-strong hover:shadow-hover">
@@ -35,9 +39,17 @@ function TaskCard({ task, statuses, onStatusChange, onDelete, onUpdate }) {
 
       <div className="flex items-center justify-between gap-2">
         {task.dueDate ? (
-          <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-ink-subtle">
+          <span
+            className={`inline-flex items-center gap-1.5 font-mono text-[11px] ${
+              overdue ? 'font-medium text-danger' : 'text-ink-subtle'
+            }`}
+          >
             <CalendarIcon className="size-3" />
-            {new Date(task.dueDate).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}
+            {overdue && 'Overdue · '}
+            {/* CHANGE [design]: WAS new Date(task.dueDate).toLocaleDateString(...), which showed
+                the previous day west of UTC. dueDay() reads the stored date part directly —
+                see the BUG FIXED note at the top of utils/date.js. */}
+            {formatDay(dueDay(task.dueDate))}
           </span>
         ) : (
           <span className="font-mono text-[11px] text-ink-faint">No due date</span>
