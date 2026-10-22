@@ -52,9 +52,11 @@ treat backend concepts (servers, databases, auth, REST design) as genuinely new.
 ### Tooling / Deployment
 - Git & GitHub for version control
 - Postman / Thunder Client for manual API testing
-- Backend hosting: Render or Railway
-- DB hosting: MongoDB Atlas
-- Frontend hosting: Vercel or Netlify
+- Backend hosting: **Render** (Web Service, free tier) — https://task-flow-zzl2.onrender.com
+- DB hosting: **MongoDB Atlas** — local dev uses database `taskflow`, production uses `taskflow-prod`
+  with its own database user
+- Frontend hosting: **Vercel** — https://task-flow-five-wine.vercel.app
+- Both hosts auto-deploy on every push to `main`. Full setup and troubleshooting: README.md → Deployment.
 
 ---
 
@@ -87,14 +89,20 @@ it's a v2 feature rather than silently building it into v1.
 server/
 ├── config/          db.js               (MongoDB connection)
 ├── models/          User.js, Project.js, Task.js
-├── controllers/     auth.controller.js, project.controller.js, task.controller.js
-├── routes/          auth.routes.js, project.routes.js, task.routes.js
-├── middleware/       auth.middleware.js, error.middleware.js
+├── controllers/     auth.controller.js, project.controller.js, task.controller.js, health.controller.js
+├── routes/          auth.routes.js, project.routes.js, task.routes.js, health.routes.js
+├── middleware/      auth.middleware.js (protect), validate.middleware.js (express-validator → 400),
+│                    error.middleware.js (central error JSON; Mongoose ValidationError/CastError → 400)
 ├── utils/           generateToken.js
-├── .env
+├── .env             (gitignored)
+├── .env.example     (committed — variable names only, no secrets)
 ├── server.js
-└── package.json
+└── package.json     ("engines": node >=20)
 ```
+
+Validation rules live in the route files as express-validator chains: `body()` for request
+bodies, `query()` for the task filters. Route order is always:
+`protect → rules → handleValidation → controller`.
 
 ### Data models
 
@@ -103,8 +111,8 @@ server/
 |---|---|---|
 | name | String | required |
 | email | String | required, unique |
-| password | String | required, hashed with bcrypt before save |
-| createdAt | Date | default now |
+| password | String | required, hashed with bcrypt before save (signup rule: 8+ chars incl. a number) |
+| createdAt / updatedAt | Date | automatic (`timestamps: true`) |
 
 **Project**
 | Field | Type | Notes |
@@ -112,7 +120,10 @@ server/
 | title | String | required |
 | description | String | optional |
 | owner | ObjectId | ref → `User` |
-| createdAt | Date | default now |
+| createdAt / updatedAt | Date | automatic (`timestamps: true`) |
+
+Index: `{ owner: 1 }`. Deleting a project also deletes its tasks (`Task.deleteMany`) — MongoDB has
+no foreign keys / `ON DELETE CASCADE`, so the controller does it.
 
 **Task**
 | Field | Type | Notes |
@@ -122,11 +133,15 @@ server/
 | status | String | enum: `todo`, `in-progress`, `done`; default `todo` |
 | dueDate | Date | optional |
 | project | ObjectId | ref → `Project` |
-| createdAt | Date | default now |
+| createdAt / updatedAt | Date | automatic (`timestamps: true`) |
+
+Index: `{ project: 1, status: 1 }` (compound — serves "tasks of a project" and the status filter).
+Ownership of a task is checked through its parent project (task → project → owner).
 
 ### API endpoints
 | Method | Endpoint | Description | Auth |
 |---|---|---|---|
+| GET | `/` | Health check → `{ "status": "ok" }` (Render's health check uses it) | No |
 | POST | `/api/auth/signup` | Register a new user | No |
 | POST | `/api/auth/login` | Log in, returns JWT | No |
 | GET | `/api/projects` | List projects for logged-in user | Yes |
@@ -139,8 +154,16 @@ server/
 | PUT | `/api/tasks/:id` | Update a task (fields or status) | Yes |
 | DELETE | `/api/tasks/:id` | Delete a task | Yes |
 
-Query params to support on the "list tasks" endpoint once basic CRUD works:
-`?status=`, `?dueBefore=` / `?dueAfter=`, `?search=`.
+Query params on the "list tasks" endpoint (implemented and validated with `query()` rules):
+`?status=`, `?dueBefore=` / `?dueAfter=` (inclusive, `$lte` / `$gte`), `?search=` (escaped,
+case-insensitive regex over title + description, max 100 chars). Each may appear only once.
+
+`GET /api/projects` and `GET /api/projects/:id` also return computed stats per project, from a
+single `Task.aggregate()` (`$match` → `$group`): `taskCounts { todo, in-progress, done }`,
+`dueSoon` (unfinished tasks due in the next 7 days), and `lastActivity`. The list is sorted by
+`lastActivity`, newest first.
+
+Not-found and not-yours both return the same `404`, deliberately, so ids can't be probed.
 
 **Auth flow:** signup hashes password with bcrypt → login verifies password, signs a JWT →
 frontend sends JWT in `Authorization: Bearer <token>` header → `auth.middleware.js` verifies
@@ -156,11 +179,21 @@ should return consistent JSON shape, e.g. `{ "success": false, "message": "..." 
 ### Folder structure
 ```
 client/
+├── vercel.json         (SPA rewrite: every path → index.html, so deep links don't 404)
+├── .env.example
 └── src/
-    ├── api/            axios.js  (base API instance)
-    ├── context/        AuthContext.jsx
-    ├── components/     Navbar, ProjectCard, TaskCard, TaskForm, ProtectedRoute
+    ├── api/            axios.js  (base instance; request interceptor adds the token,
+    │                              response interceptor handles 401 → session expired)
+    ├── authStorage.js  (token/user in localStorage or sessionStorage — "Keep me logged in";
+    │                    readValidToken() drops an expired token at startup)
+    ├── context/        AuthContext.jsx (AuthProvider), authContext.js (context object),
+    │                   useAuth.js (hook) — split so Fast Refresh works
+    ├── components/     Navbar, ProjectCard, TaskCard, TaskForm, ProjectForm, Modal, Popover,
+    │                   PasswordInput, ProtectedRoute, GuestRoute, Logo, Icons
     ├── pages/          Login.jsx, Signup.jsx, Dashboard.jsx, ProjectDetails.jsx
+    ├── utils/          date.js (formatting, overdue, due-date presets)
+    ├── statusStyles.js (status → Tailwind classes)
+    ├── index.css       (Tailwind v4 @theme design tokens from the TaskFlow UI System design)
     ├── App.jsx
     └── main.jsx
 ```
@@ -176,7 +209,10 @@ client/
 - **ProjectCard** — project summary on Dashboard.
 - **TaskCard** — task summary + quick status change.
 - **TaskForm** — create/edit a task.
+- **ProjectForm** — create/edit a project, shown in a **Modal**.
+- **Popover** — dropdown used for the account menu, ⋮ menus, and the due-date filter.
 - **ProtectedRoute** — redirects to `/login` if no valid token in `AuthContext`.
+- **GuestRoute** — the reverse: redirects logged-in users away from `/login` and `/signup`.
 
 ### Integration flow
 1. Login form submits → Axios `POST /api/auth/login`.
@@ -185,6 +221,10 @@ client/
 4. Protected pages check `AuthContext` before rendering; otherwise redirect to `/login`.
 5. Dashboard fetches projects on mount; Project Details fetches that project's tasks.
 6. Task status changes trigger `PUT /api/tasks/:id` and update local state.
+7. Filters: search is debounced 300ms; status/date filters fetch immediately; stale requests are
+   cancelled with `AbortController`; after a task change while filtered, the list refetches.
+8. Any `401` (outside `/auth/*`) → the axios response interceptor calls AuthProvider's handler →
+   session cleared → redirect to `/login`.
 
 ---
 
@@ -201,7 +241,7 @@ client/
 | 7 | 55–63 | Testing, polishing, deployment, documentation |
 
 **Current status:** _(update this line as you progress)_
-`▶ On Day: not tracked strictly | Phase: 6 complete → starting Phase 7 | Last completed task: All v1 features in §3 work end to end — Dashboard (list/create projects), ProjectDetails board (3 status columns; task create/edit/delete/status change; project edit/delete; server-side filter/search with debounce + abort). Backend fixes: deleting a project also deletes its tasks; PUT /api/tasks/:id accepts dueDate: null to clear it. Next (Phase 7): 401 response interceptor + logged-in redirect from /login, move useAuth to its own file, Jest + Supertest backend tests, deployment (env-based CORS origin, SPA rewrite), README.`
+`▶ On Day: not tracked strictly | Phase: 7 in progress | Done in Phase 7: polish (401 interceptor, expired-token check at startup, GuestRoute, useAuth split), deployment (Render + Vercel + Atlas, live — see §2), documentation (README.md + this file). Also done ahead of plan: TaskFlow UI design, project progress stats (aggregation), query-param validation, indexes. Remaining: (1) user is reviewing ~27 uncommitted files marked with "CHANGE [tag]" comments → trim comments, commit, push (the live site still runs the older commit 41d9df4 until then); (2) fix 4 npm audit vulnerabilities in server/ (plain npm audit fix, not --force); (3) pin engines.node to "24.x"; (4) Jest + Supertest backend tests (postponed by user).`
 
 > Full day-by-day breakdown (all 63 days) lives in the companion Word doc
 > `TaskFlow-Project-Plan.docx`. If Claude needs the exact task for a specific day and it isn't
@@ -237,9 +277,16 @@ PORT=5000
 MONGO_URI=<mongodb atlas connection string>
 JWT_SECRET=<random secret string>
 JWT_EXPIRES_IN=7d
+CLIENT_URL=http://localhost:5173        # CORS allow-list, comma-separated, exact match, no trailing slash
 ```
 
 (Frontend `.env` — Vite):
 ```
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
+
+Production values live in the host dashboards, never in git:
+- **Render:** `MONGO_URI` (prod user + `taskflow-prod` database), `JWT_SECRET` (different from
+  dev), `JWT_EXPIRES_IN`, `CLIENT_URL=https://task-flow-five-wine.vercel.app`. Render sets `PORT`.
+- **Vercel:** `VITE_API_BASE_URL=https://task-flow-zzl2.onrender.com/api`. It's baked in at build
+  time, so changing it needs a redeploy. Never put secrets in `VITE_` variables.
